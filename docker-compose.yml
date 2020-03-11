@@ -60,17 +60,16 @@ services:
     #   - "11211:11211"
 
   mongo:
-    # We use WiredTiger in all environments. In development environments we use small files
-    # to conserve disk space, and disable the journal for a minor performance gain.
-    # See https://docs.mongodb.com/v3.0/reference/program/mongod/#options for complete details.
-    command: mongod --smallfiles --nojournal --storageEngine wiredTiger
     container_name: edx.devstack.mongo
     hostname: mongo.devstack.edx
-    image: mongo:${MONGO_VERSION:-3.6.17}
-    # ports:
-    #  - "27017:27017"
+    build:
+      context: ./mongo-local-replicaset
+    ports:
+     - "27001:27001"
+     - "27002:27002"
+     - "27003:27003"
     volumes:
-      - mongo_data:/data/db
+      - mongo_data:/data
 
   mysql:
     command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
@@ -295,7 +294,9 @@ services:
       - edxapp_studio_assets:/edx/var/edxapp/staticfiles/
 
   forum:
-    command: bash -c 'source /edx/app/forum/ruby_env && source /edx/app/forum/devstack_forum_env && cd /edx/app/forum/cs_comments_service && bundle install && while true; do ruby app.rb -o 0.0.0.0 ; sleep 2; done'
+    command: bash -c 'source /edx/app/forum/ruby_env && source /edx/app/forum/devstack_forum_env && cd /edx/app/forum/cs_comments_service && bundle install && while true; do MONGOHQ_URL="mongodb://edx.devstack.mongo:27001,edx.devstack.mongo:27002,edx.devstack.mongo:27003/?replicaSet=rs0" ruby app.rb -o 0.0.0.0 ; sleep 2; done'
+    environment:
+      - MONGOID_READ_MODE
     container_name: edx.devstack.forum
     hostname: forum.devstack.edx
     depends_on:
