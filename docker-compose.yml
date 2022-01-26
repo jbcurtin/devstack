@@ -80,6 +80,12 @@ services:
       MYSQL_ROOT_PASSWORD: ""
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     image: mysql:5.6
+    networks:
+      default:
+        aliases:
+          - edx.devstack.mysql57
+          - edx.devstack.mysql56
+          - edx.devstack.mysql
     # ports:
     #   - "3506:3306"
     volumes:
